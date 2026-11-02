@@ -1,5 +1,10 @@
 {
     "base_url": "https://demoblaze.com",
+    "login_credentials":{
+        "username": "IQB_Static_User_2026",
+        "password": "SecurePass123!"
+    },
+
     "checkout_details": {
         "name": "Deninio Smith",
         "country": "South Africa",
