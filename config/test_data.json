@@ -1,0 +1,18 @@
+{
+    "base_url": "https://demoblaze.com",
+    "checkout_details": {
+        "name": "Deninio Smith",
+        "country": "South Africa",
+        "city" : "Cape Town",
+        "card" : "1234567890123456",
+        "month": "11",
+        "year": "2026"
+
+    },
+    "cart_items":[
+        { "category": "Monitors", "name": "ASUS Full HD", "quantity": 1},
+        { "category": "Phones", "name": "Nexus 6", "quantity": 2}
+
+    ]
+
+}
