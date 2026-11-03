@@ -1,23 +1,30 @@
 {
-    "base_url": "https://demoblaze.com",
-    "login_credentials":{
-        "username": "IQB_Static_User_2026",
-        "password": "SecurePass123!"
+  "base_url": "https://demoblaze.com",
+  
+  "login_credentials": {
+    "username": "IQB_Static_User_2026",
+    "password": "SecurePass123!"
+  },
+
+  "checkout_details": {
+    "name": "Deninio Smith",
+    "country": "South Africa",
+    "city": "Cape Town",
+    "card": "1234567890123456",
+    "month": "11",
+    "year": "2026"
+  },
+
+  "cart_items": [
+    { 
+      "category": "Monitors", 
+      "name": "ASUS Full HD", 
+      "quantity": 1
     },
-
-    "checkout_details": {
-        "name": "Deninio Smith",
-        "country": "South Africa",
-        "city" : "Cape Town",
-        "card" : "1234567890123456",
-        "month": "11",
-        "year": "2026"
-
-    },
-    "cart_items":[
-        { "category": "Monitors", "name": "ASUS Full HD", "quantity": 1},
-        { "category": "Phones", "name": "Nexus 6", "quantity": 2}
-
-    ]
-
+    { 
+      "category": "Phones", 
+      "name": "Nexus 6", 
+      "quantity": 2
+    }
+  ]
 }

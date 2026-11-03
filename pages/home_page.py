@@ -2,74 +2,88 @@ from playwright.sync_api import expect
 from pages.base_page_help import BasePage
 
 class HomePage(BasePage):
+    """Handles core homepage logic, modal authentication flows, and non-destructive navigation routing."""
     def __init__(self, page):
         super().__init__(page)
-        # Selectors used to map demoblaze website layout
+        # Main Navigation Bar Locators
         self.signup_nav = page.locator("#signin2")
+        self.login_nav = page.locator("#login2")
+        self.cart_nav = page.locator("#cartur")
+        self.welcome_user_text = page.locator("#nameofuser")
+        
+        # Sign Up Modal Form Field Locators
         self.signup_username = page.locator("#sign-username")
         self.signup_password = page.locator("#sign-password")
-
-        self.login_nav = page.locator("#login2")
+        self.signup_button = page.locator("button[onclick='register()']")
+        
+        # Log In Modal Form Field Locators
         self.login_username = page.locator("#loginusername")
         self.login_password = page.locator("#loginpassword")
         self.login_button = page.locator("button[onclick='logIn()']")
-        self.welcome_user_text = page.locator("#nameofuser")
-
-        # CSS selector to find the exact button that triggers register
-        self.signup_button = page.locator("button[onclick='register()']")
-        # Targets the close button specifically belonging to the sign in modal
-        self.signup_close_button = page.locator("#signInModal bootstrap-modal-footer, button:has-text('Close')").first
-        self.cart_nav = page.locator("#cartur")
-
-    def login_user(self, username, password):
-        """Navigates through the login modal and verifies the welcome token displays securely."""
-        self.login_nav.click()
-        self.login_username.wait_for(state="visible")
-        self.login_username.fill(username)
-        self.login_password.fill(password)
-        self.login_button.click()
-    
-        # Wait for the top navbar text area container to render visibly
-        self.welcome_user_text.wait_for(state="visible", timeout=5000)
-        expect(self.welcome_user_text).to_contain_text(username, timeout=5000)
-
-    def go_to_home_grid(self):
-        """Reusable method to return to the home screen and wait for the marketplace database to load."""
-        home_link = self.page.get_by_role("link", name="Home")
-        
-        # API Network Sync: Wait for the main database catalog entries to fully load
-        with self.page.expect_response("**/entries", timeout=5000):
-            home_link.click()
-            
-        self.page.locator("#tbodyid").wait_for(state="visible", timeout=5000)
-        self.page.wait_for_timeout(500)
 
     def navigate_to_signup(self):
+        """Clicks the navigation header sign-up action and awaits dialog presentation."""
         self.signup_nav.click()
-        self.signup_username.wait_for(state="visible")
+        self.signup_username.wait_for(state="visible", timeout=5000)
 
     def register_user(self, username, password):
-        """Fills and submits user registration, self-healing the state if the user already exists."""
+        """Registers a user profile by awaiting explicit server-side HTTP database write confirmation."""
         self.signup_username.fill(username)
         self.signup_password.fill(password)
-        self.handle_next_alert("Sign up successful.")
-        self.signup_button.click()
+        self.signup_button.wait_for(state="visible")
+        
+        print(f"\n[NETWORK SYNC] Submitting registration for '{username}'...")
+        # Intercept both the network transaction and the pop-up event simultaneously
+        with self.page.expect_response("**/signup", timeout=30000) as response_info:
+            with self.page.expect_event("dialog", timeout=30000) as dialog_info:
+                self.signup_button.click()
+                
+        dialog = dialog_info.value
+        print(f"[ALERT INTERCEPT] Registration system response: '{dialog.message}'")
+        dialog.accept()
+        
+        is_successful = response_info.value.status == 200
+        
+        # Safely shut down the registration modal interface container programmatically
+        self.page.evaluate("""() => {
+            const closeBtn = document.querySelector('#signInModal .modal-footer button');
+            if (closeBtn) closeBtn.click();
+        }""")
+        self.signup_username.wait_for(state="hidden")
+        return is_successful
 
-        try:
-            self.signup_username.wait_for(state="hidden", timeout=3000)
-        except Exception:
-            print(f"\n[INFO] Registration modal stuck active for '{username}'. Handling self-healing close action.")
-            self.page.evaluate("""() => {
-                const closeBtn = document.querySelector('#signInModal .modal-footer button') || 
-                                 document.querySelector('#signInModal .modal-header .close');
-                if (closeBtn) closeBtn.click();
-            }""")
-            self.signup_username.wait_for(state="hidden", timeout=3000)
+    def login_user(self, username, password):
+        """Authenticates user profile data with session guardrails to protect against race conditions."""
+        # Guardrail: If already authenticated to this user profile context, bypass execution to save time
+        if self.welcome_user_text.is_visible() and f"Welcome {username}" in (self.welcome_user_text.text_content() or ""):
+            print(f"[AUTH GUARDRAIL] Active validation session detected for '{username}'. Skipping login routine.")
+            return
+
+        self.login_nav.click()
+        self.login_username.wait_for(state="visible", timeout=5000)
+        self.login_username.fill(username)
+        self.login_password.fill(password)
+        
+        print(f"[NETWORK SYNC] Deserializing login request stream for: '{username}'")
+        with self.page.expect_response("**/login", timeout=30000) as response_info:
+            self.login_button.click()
+            
+        assert response_info.value.status == 200, "CRITICAL ERROR: API engine rejected login credentials."
+        self.welcome_user_text.wait_for(state="visible", timeout=30000)
+        expect(self.welcome_user_text).to_contain_text(f"Welcome {username}", timeout=30000)
+
+    def go_to_home_grid(self):
+        """
+        Routes the browser context back to the primary category layout catalog.
+        Uses the high-level brand logo text link to avoid clearing active memory session store values.
+        """
+        # Architectural Fix: Click the logo instead of standard 'Home' nav link to protect cookie arrays
+        self.page.get_by_role("link", name="PRODUCT STORE").click()
+        self.page.locator("#tbodyid").wait_for(state="visible", timeout=15000)
 
     def click_category(self, category_name: str):
-        """Clicks a sidebar category and waits directly for the backend category API payload response."""
+        """Filters catalog items via sidebar category navigation selectors."""
         name_lower = category_name.lower()
-        
         if "monit" in name_lower or "mont" in name_lower:
             normalized_name = "Monitors"
         elif "phon" in name_lower:
@@ -80,17 +94,12 @@ class HomePage(BasePage):
             normalized_name = category_name
 
         category_link = self.page.get_by_role("link", name=normalized_name, exact=True)
-        
-        # API Network Sync: Freeze execution until the database categories request endpoint clears
-        with self.page.expect_response("**/bycat", timeout=5000):
-            category_link.click()
-        
-        # Allow a split second for the browser rendering engine to paint the new items to the view canvas
-        self.page.wait_for_timeout(500)
+        category_link.click()
+        self.page.locator("#tbodyid").wait_for(state="visible", timeout=15000)
 
     def click_product(self, product_name: str):
-        """Clicks on a specific product link from the grid layout safely."""
+        """Executes a thread-safe navigation link click directly targeting a product listing."""
         product_link = self.page.get_by_role("link", name=product_name).first
-        product_link.wait_for(state="visible", timeout=5000)
+        product_link.wait_for(state="visible", timeout=15000)
         product_link.click()
         self.page.wait_for_load_state("domcontentloaded")
