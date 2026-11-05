@@ -35,5 +35,5 @@ class ProductPage(BasePage):
             
         except TimeoutError:
             # Fallback routine to protect against single-page application animation blocks
-            print("[PRODUCT] UI dialogue window suppressed by layout collision. Monitoring API fallback channel...")
+            print("[PRODUCT] UI dialogue window suppressed by layout collision. Monitoring API fallback channel")
             self.page.wait_for_timeout(1000)  # Micro-sleep to allow underlying thread resolution

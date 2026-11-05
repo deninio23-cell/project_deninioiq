@@ -44,7 +44,7 @@ def test_demoblaze_cart_checkout(browser_context, test_data):
     calculated_total = cart_page.verify_totals_and_items(test_data["cart_items"])
     assert calculated_total > 0, "Validation Failure: Cart calculated totals display an empty or negative balance state."
 
-    # Save an artifact tracking screenshot representing successful total compilation
+    # Save an a screenshot representing successful total 
     artifacts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "artifacts")
     screenshot_dir = os.path.join(artifacts_dir, "screenshots")
     os.makedirs(screenshot_dir, exist_ok=True)

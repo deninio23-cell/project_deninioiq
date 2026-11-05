@@ -34,8 +34,8 @@ class HomePage(BasePage):
         
         print(f"\n[NETWORK SYNC] Submitting registration for '{username}'...")
         # Intercept both the network transaction and the pop-up event simultaneously
-        with self.page.expect_response("**/signup", timeout=30000) as response_info:
-            with self.page.expect_event("dialog", timeout=30000) as dialog_info:
+        with self.page.expect_response("**/signup", timeout=15000) as response_info:
+            with self.page.expect_event("dialog", timeout=15000) as dialog_info:
                 self.signup_button.click()
                 
         dialog = dialog_info.value
@@ -65,12 +65,12 @@ class HomePage(BasePage):
         self.login_password.fill(password)
         
         print(f"[NETWORK SYNC] Deserializing login request stream for: '{username}'")
-        with self.page.expect_response("**/login", timeout=30000) as response_info:
+        with self.page.expect_response("**/login", timeout=15000) as response_info:
             self.login_button.click()
             
         assert response_info.value.status == 200, "CRITICAL ERROR: API engine rejected login credentials."
-        self.welcome_user_text.wait_for(state="visible", timeout=30000)
-        expect(self.welcome_user_text).to_contain_text(f"Welcome {username}", timeout=30000)
+        self.welcome_user_text.wait_for(state="visible", timeout=15000)
+        expect(self.welcome_user_text).to_contain_text(f"Welcome {username}", timeout=15000)
 
     def go_to_home_grid(self):
         """
@@ -95,11 +95,11 @@ class HomePage(BasePage):
 
         category_link = self.page.get_by_role("link", name=normalized_name, exact=True)
         category_link.click()
-        self.page.locator("#tbodyid").wait_for(state="visible", timeout=15000)
+        self.page.locator("#tbodyid").wait_for(state="visible", timeout=5000)
 
     def click_product(self, product_name: str):
         """Executes a thread-safe navigation link click directly targeting a product listing."""
         product_link = self.page.get_by_role("link", name=product_name).first
-        product_link.wait_for(state="visible", timeout=15000)
+        product_link.wait_for(state="visible", timeout=5000)
         product_link.click()
         self.page.wait_for_load_state("domcontentloaded")
